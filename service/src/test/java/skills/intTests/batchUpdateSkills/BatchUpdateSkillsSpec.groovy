@@ -36,6 +36,33 @@ class BatchUpdateSkillsSpec extends DefaultIntSpec {
     }
 
 
+    def "batch update sets justification only on selected approval skills"() {
+        def project = createProject(1)
+        def subject = createSubject(1, 1)
+        def skills = createSkills(3, 1, 1, 100)
+        skills[0].selfReportingType = 'Approval'
+        skills[0].justificationRequired = (!required).toString()
+        skills[1].selfReportingType = 'HonorSystem'
+        skills[2].selfReportingType = 'Approval'
+        skills[2].justificationRequired = (!required).toString()
+        skillsService.createProjectAndSubjectAndSkills(project, subject, skills)
+        def honorBefore = skillsService.getSkill(skills[1]).justificationRequired
+
+        when:
+        skillsService.batchUpdateSkills(project.projectId, [
+                justificationRequired: required,
+                skills: skills[0..1].skillId
+        ])
+
+        then:
+        skillsService.getSkill(skills[0]).justificationRequired == required
+        skillsService.getSkill(skills[1]).justificationRequired == honorBefore
+        skillsService.getSkill(skills[2]).justificationRequired == !required
+
+        where:
+        required << [true, false]
+    }
+
     def "batch update point increment - definition only"() {
         def p1 = createProject(1)
         def p1subj1 = createSubject(1, 1)
