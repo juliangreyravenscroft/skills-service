@@ -31,6 +31,7 @@ class MultiSkillUpdateRequest {
     String enabled
 
     String selfReportingType
+    Boolean justificationRequired
 
     List<String> skills
 }
