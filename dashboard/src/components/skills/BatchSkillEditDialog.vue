@@ -77,6 +77,7 @@ const atLeastOne = (value, testContext) => {
       || parent.pointIncrementIntervalHrs !== null
       || parent.pointIncrementIntervalMins !== null
       || parent.selfReportingType !== null
+      || parent.justificationRequired !== null
       || (parent.enabled !== null && parent.enabled !== false)
 }
 const oneMsg = 'You must change at least one value'
@@ -132,6 +133,7 @@ const schema = object({
   'selfReportingType': object()
       .test('atLeastOne', oneMsg, async (v, t) => atLeastOne(v, t))
       .label('Minutes').nullable(),
+  justificationRequired: object().nullable().default(null),
   'enabled': boolean()
       .test('atLeastOne', oneMsg, async (v, t) => atLeastOne(v, t))
       .label('Visibility').nullable(),
@@ -144,6 +146,7 @@ const initialValues = {
   pointIncrementIntervalHrs: null,
   pointIncrementIntervalMins: null,
   selfReportingType: null,
+  justificationRequired: null,
   enabled: null,
 }
 const { values, meta, validate } = useForm({ validationSchema: schema, initialValues });
@@ -155,6 +158,10 @@ const honorKey = 'HonorSystem'
 const selfReportOptions = [
   { name: 'Approval Queue', key: approvalKey },
   { name: 'Honor System', key: honorKey },
+]
+const justificationOptions = [
+  { name: 'Required', value: true },
+  { name: 'Optional', value: false },
 ]
 const skillsIds = props.skills.map((it) => it.skillId)
 
@@ -180,6 +187,7 @@ const doUpdate = () => {
     ...values,
     skills: skillsIds,
     selfReportingType: values.selfReportingType?.key,
+    justificationRequired: values.justificationRequired?.value,
     numMaxOccurrencesIncrementInterval: values.numPointIncrementMaxOccurrences
   }
   if (values.pointIncrementIntervalHrs !== null || values.pointIncrementIntervalMins !== null ) {
@@ -265,6 +273,17 @@ const hasDisabledSkills = computed(() => numOfDisabledSkills.value > 0)
             :options="selfReportOptions"
             :show-clear-button="true"
             name="selfReportingType" />
+
+        <SkillsDropDown
+            label="Justification Required"
+            aria-label="Justification Required"
+            :options="justificationOptions"
+            :show-clear-button="true"
+            name="justificationRequired">
+          <template #value="{ value }">{{ value?.name ?? 'No change' }}</template>
+          <template #option="{ option }">{{ option.name }}</template>
+        </SkillsDropDown>
+        <div class="text-sm">Applies only to skills that use the Approval Queue after this update.</div>
 
         <pending-approvals-warning
             :self-reporting-type="selfReportingType?.key || SelfReportType.Approval"
