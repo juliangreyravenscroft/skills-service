@@ -53,12 +53,7 @@ testsInThisRun=${allTests[@]:$start:$numPerRun}
 echo "There are [$totalNum] total tests. Run [$currentRun]: Start Number=[$start], running up to [$numPerRun] tests"
 
 echo "Cypress tests:"
-returnCode=0
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NOCOLOR='\033[0m'
-testResultOutput="Test Results:\n"
-count=1;
+count=1
 testsToRun=()
 for testClass in ${testsInThisRun[@]}
 do
@@ -67,23 +62,13 @@ do
   testsToRun+=("cypress/e2e/${testClass}")
 done
 echo "------------------------------------------------"
-testToRunStr=$(echo ${testsToRun[*]} | tr ' ' ',')
+testToRunStr=$(IFS=,; echo "${testsToRun[*]}")
 echo "Will run [$testToRunStr]"
 
-  commandToRun="npm run cy:run -- --spec \"${testToRunStr}\""
-  echo "Running command [${commandToRun}]"
-  eval $commandToRun
-  commandStatusCode=$?
-  if [ $commandStatusCode -ne 0 ];
-  then
-    returnCode=$commandStatusCode
-    testResultOutput="${testResultOutput}Test $testNum: ${RED}\u274c FAILED${NOCOLOR} => ${testClass}\n"
-  else
-    testResultOutput="${testResultOutput}Test $testNum: ${GREEN}\u2714 PASSED${NOCOLOR} => ${testClass}\n"
-  fi
-
-echo "-------------------"
-echo -e $testResultOutput
-echo "-------------------"
-echo "Thanks for testing! Return code is [${returnCode}]"
-exit $returnCode
+if npm run cy:run -- --spec "$testToRunStr"; then
+    echo "Cypress run $currentRun of $totalConcurrent passed."
+else
+    status=$?
+    echo "Cypress run $currentRun of $totalConcurrent failed with exit code $status. See the Cypress output above for details." >&2
+    exit "$status"
+fi
